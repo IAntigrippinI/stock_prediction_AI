@@ -4,7 +4,7 @@ import json
 
 import pandas as pd
 
-from cred import API_KEY
+from backend.cred import API_KEY
 
 def get_values(row) -> tuple:
     print(row + '\n\n')
