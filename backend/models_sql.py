@@ -4,10 +4,10 @@ from sqlalchemy.ext.declarative import declarative_base
 import datetime 
 DeclBase = declarative_base()
 
-class IBM(DeclBase):
-    __tablename__ = 'IBM'
-    id = Column(Integer,primary_key=True)
-    date = Column(DateTime, default=datetime.datetime.utcnow)
+
+class ibm(DeclBase):
+    __tablename__ = 'ibm'
+    date = Column(DateTime, default=datetime.datetime.utcnow, primary_key=True)
     open = Column(Float)
     high = Column(Float)
     low = Column(Float)
@@ -16,7 +16,7 @@ class IBM(DeclBase):
 
 
 if __name__ == '__main__':
-    from backend.cred import DB_URL
+    from cred import DB_URL
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
