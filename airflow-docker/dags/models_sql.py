@@ -17,7 +17,7 @@ class ibm(DeclBase):
 
 
 def create_table():
-    from cred import DB_URL
+    from cred_airflow import DB_URL
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
