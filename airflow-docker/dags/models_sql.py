@@ -16,6 +16,26 @@ class ibm(DeclBase):
     volume = Column(Float)
 
 
+class microsoft(DeclBase):
+    __tablename__ = "microsoft"
+    date = Column(DateTime, default=datetime.datetime.utcnow, primary_key=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    volume = Column(Float)
+
+
+class apple(DeclBase):
+    __tablename__ = "apple"
+    date = Column(DateTime, default=datetime.datetime.utcnow, primary_key=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    volume = Column(Float)
+
+
 def create_table():
     from cred_airflow import DB_URL
     from sqlalchemy import create_engine
