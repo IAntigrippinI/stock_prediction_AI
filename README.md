@@ -1,5 +1,7 @@
 # stock_prediction_AI
 
+# **Запуск в docker см. в airflow-docker**
+
 ## Как начать
 
 ### 1. Запустить образ PostrgreSQL: 
