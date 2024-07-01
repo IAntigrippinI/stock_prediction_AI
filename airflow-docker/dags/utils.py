@@ -1,10 +1,3 @@
-from datetime import datetime
-
-
-def to_timestmp(time_str: str) -> datetime.timestamp:
-    dates, times = time_str.split()[0], time_str.split()[1]
-
-
 def make_time_range(start: str, end: str) -> list:
     start_month = start.split("-")[1]
     start_year = start.split("-")[0]
