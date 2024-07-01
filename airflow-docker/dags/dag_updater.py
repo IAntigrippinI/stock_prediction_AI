@@ -9,43 +9,10 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 
-from sqlalchemy import create_engine, desc
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, DateTime, Float
-from sqlalchemy.ext.declarative import declarative_base
+from db_utils import add_row, is_record, get_last_date
 
-from cred_airflow import API_KEY, DB_URL
-
-
-DeclBase = declarative_base()
-
-
-class ibm(DeclBase):
-    __tablename__ = "ibm"
-    date = Column(DateTime, default=datetime.datetime.utcnow(), primary_key=True)
-    open = Column(Float)
-    high = Column(Float)
-    low = Column(Float)
-    close = Column(Float)
-    volume = Column(Float)
-
-
-def add_row_ibm(row: pd.Series):
-    try:
-        row = row.tolist()
-        print(row)
-        db_session = create_session()
-        new_row = ibm()
-        new_row.date = row[0]
-        new_row.open = row[1]
-        new_row.high = row[2]
-        new_row.low = row[3]
-        new_row.close = row[4]
-        new_row.volume = row[5]
-        db_session.add(new_row)
-        db_session.commit()
-    except:
-        pass
+from cred_airflow import API_KEY
+from settings import stock_names, db_names, db_to_stock
 
 
 def get_today():
@@ -58,7 +25,7 @@ def get_today():
 
 def get_data(symbol):
     print(get_today())
-    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=5min&month={get_today()}&outputsize=full&apikey={API_KEY}"
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={db_to_stock[symbol]}&interval=5min&month={get_today()}&outputsize=full&apikey={API_KEY.get_key()}"
     respocne = requests.get(url).json()
     try:
         respocne_json = respocne["Time Series (5min)"]
@@ -70,24 +37,11 @@ def get_data(symbol):
 
     result = []
     for key, value in respocne_json.items():
-        # print(f'{key}, {list(value.values())}')
         data = [key]
         data.extend(list(value.values()))
         result.append(data)
     result = np.array(result)
     return result
-
-
-def create_session():
-    engine = create_engine(DB_URL)
-    SessionClass = sessionmaker(bind=engine)
-    return SessionClass()
-
-
-def get_last_date() -> str:
-    db_session = create_session()
-    last_date = db_session.query(ibm).order_by(desc(ibm.date)).first().date
-    return str(last_date)
 
 
 def find_new_data(data: np.array, last_date: str):
@@ -97,26 +51,28 @@ def find_new_data(data: np.array, last_date: str):
 
 
 def find_new():
-    symbols = ["IBM"]
-    for symbol in symbols:
+
+    for symbol in db_names:
+        if not is_record(symbol):
+            continue
+
         data = get_data(symbol)
         df = pd.DataFrame(
             data, columns=["date", "open", "high", "low", "close", "volume"]
         )
-        last_date = get_last_date()
+        last_date = get_last_date(symbol)
         df_new = df[df.date > last_date]
-        print(df_new)
-        df_new.apply(lambda x: add_row_ibm(x), axis=1)
-
-
-# def add_to_db():
-#     df = pd.read_csv("output.csv", index_col=0)
-#     print(df)
-#     df.apply(lambda x: add_row(x), axis=1)
+        if df_new.shape[0] != 0:
+            print(f"add new data for {symbol}")
+            df_new.apply(
+                lambda x: add_row(x, symbol),
+            )
+        else:
+            print(f"New data for {symbol} was not found")
 
 
 args = {
-    "owner": "DB",  # Информация о владельце DAG
+    "owner": "airflow",  # Информация о владельце DAG
     "start_date": dt.datetime(2024, 6, 25),  # Время начала выполнения пайплайна
     "retries": 1,  # Количество повторений в случае неудач
     "retry_delay": dt.timedelta(minutes=1),  # Пауза между повторами
@@ -125,7 +81,7 @@ args = {
 
 
 with DAG(
-    dag_id="update_dag",  # Имя DAG
+    dag_id="dag_updater",  # Имя DAG
     schedule_interval="@daily",  # Периодичность запуска
     default_args=args,  # Базовые аргументы
 ) as dag:
