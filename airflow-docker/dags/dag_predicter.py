@@ -12,20 +12,6 @@ from db_utils import create_session, delete_from_table, add_row_predict
 from settings import db_names
 
 
-def add_row_apple_predict(row):
-    print(row)
-    session = create_session()
-    new_row = apple_predict()
-
-    new_row.date = row[0]
-    new_row.open = row[1]
-    new_row.high = row[2]
-    new_row.low = row[3]
-    new_row.close = row[4]
-    session.add(new_row)
-    session.commit()
-
-
 def start_pred():
     for symbol in db_names:
         df = get_predict_data(symbol)
