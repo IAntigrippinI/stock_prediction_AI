@@ -19,7 +19,7 @@ def create_columns() -> list:
     new_columns = ["date"]
     columns = ["open", "high", "low", "close"]
     time_before_for_predict = 3
-    for i in range(time_before_for_predict, 0, -1):
+    for i in range(N_DAYS_BEFORE_FOR_MODEL, 0, -1):
         for col in columns:
             new_columns.append(col + "_" + str(i) + "b")
     return new_columns
@@ -76,7 +76,7 @@ def start_predict(row, symbol):
 def get_predict_data(symbol):
     last_row = list(
         create_cursor().execute(
-            f"SELECT date,open,high,low,close FROM public.{symbol} order by date DESC limit {PREDICT_TIME}"
+            f"SELECT date,open,high,low,close FROM public.{symbol} order by date DESC limit {N_DAYS_BEFORE_FOR_MODEL}"
         )
     )
 

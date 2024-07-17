@@ -64,9 +64,8 @@ def find_new():
         df_new = df[df.date > last_date]
         if df_new.shape[0] != 0:
             print(f"add new data for {symbol}")
-            df_new.apply(
-                lambda x: add_row(x, symbol),
-            )
+            print(df_new)
+            df_new.apply(lambda x: add_row(x, symbol), axis=1)
         else:
             print(f"New data for {symbol} was not found")
 
