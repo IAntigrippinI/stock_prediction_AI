@@ -1,3 +1,4 @@
+import pandas as pd
 from datetime import datetime
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
@@ -29,6 +30,7 @@ def delete_from_table(name_table):
             create_engine(DB_URL).connect().execute(f"DELETE FROM {name_table}")
         )
         return "succes delete"
+
     except:
         return "Error"
 
@@ -63,12 +65,12 @@ def is_record(symbol: str) -> bool:
 def add_row(row: list, symbol: str):
     try:
         db_session = create_session()
-        if symbol == "IBM":
+        if symbol == "IBM" or symbol == "ibm":
             new_row = ibm()
-        elif symbol == "MSFT":
+        elif symbol == "MSFT" or symbol == "microsoft":
             new_row = microsoft()
 
-        elif symbol == "AAPL":
+        elif symbol == "AAPL" or symbol == "apple":
             new_row = apple()
 
         new_row.date = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S")
@@ -117,9 +119,41 @@ def get_last_date(symbol) -> str:
     return str(last_date)
 
 
-if __name__ == "__main__":
+def get_table_for_metrics(name_db: str) -> pd.DataFrame:
+    engine = create_engine(DB_URL)
+    conn = engine.connect()
+    data = conn.execute(f"SELECT date, close FROM {name_db}")
+    df = pd.DataFrame(data, columns=["date", "close"])
+    return df
+
+
+def add_row_metric(row, symbol, metric):
     db_session = create_session()
-    row = db_session.query(ibm).filter_by(open=123).first()
-    print(row)
-    row.high = 222
+    conn = db_session.connection()
+    conn.execute(
+        f"""INSERT INTO public.{symbol}_{metric} VALUES ('{str(row[0])}', {row[1]})"""
+    )
     db_session.commit()
+    db_session.close()
+
+
+def add_row_macd(row, symbol):
+    db_session = create_session()
+    conn = db_session.connection()
+    conn.execute(
+        f"""INSERT INTO public.{symbol}_macd VALUES ('{str(row[0])}', {row[1]}, {row[2]})"""
+    )
+    db_session.commit()
+    db_session.close()
+
+
+def add_row_to_all(symbol, row):
+    db_session = create_session()
+    conn = db_session.connection()
+    conn.execute(
+        f"""
+INSERT INTO all_data VALUES('{row[0]}', '{symbol}', {row[1]}, {row[2]}, {row[3]}, {row[4]}, {row[5]}, {row[6]}, {row[7]}, {row[8]})
+"""
+    )
+    db_session.commit()
+    db_session.close()
